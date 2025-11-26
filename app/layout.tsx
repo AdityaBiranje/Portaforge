@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { BackgroundBeams } from "@/components/ui/background-beams";
+import { Providers } from "@/components/providers/Providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,9 +27,22 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`}
       >
-        {children}
+        {/* Global Mesh Gradient Background */}
+        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[100px] mix-blend-screen" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[100px] mix-blend-screen" />
+          <div className="absolute top-[30%] left-[30%] w-[40%] h-[40%] rounded-full bg-pink-600/10 blur-[80px] mix-blend-screen" />
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]" />
+        </div>
+
+        <Providers>
+          <BackgroundBeams />
+          <div className="relative z-10">
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   );

@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String  @id @default(cuid())
+  name          String?
+  email         String  @unique
+  password      String? // Hashed password for credentials auth
+  image         String?
+  username      String? @unique
+  accounts      Account[]
+  sessions      Session[]
+  sites         Site[]
+  apiKeys       ApiKey[]
+  assets        Asset[]
+  plan          SubscriptionPlan @default(HOBBY)
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum SubscriptionPlan {
+  HOBBY
+  PRO
+  TEAM
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Site {
+  id            String   @id @default(cuid())
+  ownerId       String
+  owner         User     @relation(fields: [ownerId], references: [id])
+  slug          String
+  title         String
+  status        SiteStatus @default(DRAFT)
+  theme         Json      // {colors, fonts, radius, etc.}
+  blocks        Json      // array of blocks with schema below
+  previewUrl    String?
+  publishedUrl  String?
+  analytics     Json?     // pageviews, clicks, referrers
+  messages      Message[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([ownerId, slug])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  name      String?
+  email     String
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+enum SiteStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Template {
+  id          String  @id @default(cuid())
+  name        String
+  category    String  // Minimal, Creative, Photo, Dev
+  thumbnail   String
+  theme       Json
+  blocks      Json
+  createdAt   DateTime @default(now())
+}
+
+model Asset {
+  id          String  @id @default(cuid())
+  ownerId     String
+  owner       User    @relation(fields: [ownerId], references: [id])
+  fileUrl     String
+  type        String  // image, video, doc
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now())
+}
+
+model ApiKey {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields:[userId], references: [id])
+  key       String  @unique
+  label     String?
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  content   String   @db.Text
+  excerpt   String?  @db.Text
+  image     String?
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HelpArticle {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  category  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
